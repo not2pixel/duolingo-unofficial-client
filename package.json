@@ -1,0 +1,49 @@
+{
+  "name": "@duohacker/duolingo",
+  "version": "0.1.0",
+  "description": "An unofficial TypeScript client for interacting with Duolingo web APIs.",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "duolingo",
+    "duolingo-api",
+    "unofficial-api",
+    "api-client",
+    "typescript",
+    "sdk"
+  ],
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
