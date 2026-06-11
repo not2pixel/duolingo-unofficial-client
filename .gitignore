@@ -4,7 +4,16 @@ coverage/
 .env
 .env.*
 !.env.example
+.env.local
+.env.*.local
+.vercel/
+demos/**/.env
+demos/**/.env.local
+demos/**/.env.*.local
+demos/**/.vercel/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+.vercel

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Duolingo Unofficial Client Demo</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="intro" aria-labelledby="title">
+        <p class="eyebrow">Read-only Vercel demo</p>
+        <h1 id="title">Duolingo Unofficial Client</h1>
+        <p class="disclaimer">
+          This demo is unofficial and is not affiliated with, endorsed by, or sponsored by Duolingo.
+        </p>
+        <p>
+          The browser calls this deployment's own Vercel Function at <code>/api/me</code>.
+          The function uses a server-side token and returns only safe profile fields.
+        </p>
+      </section>
+
+      <section class="toolbar" aria-labelledby="controls-title">
+        <h2 id="controls-title">Profile</h2>
+        <label class="access-key">
+          <span>Demo access key</span>
+          <input id="accessKey" type="password" autocomplete="off" placeholder="Only if configured">
+        </label>
+        <div class="buttons">
+          <button id="loadButton" type="button">Load profile</button>
+          <button id="refreshButton" type="button" disabled>Refresh</button>
+        </div>
+        <p id="status" class="status" aria-live="polite">No profile loaded yet.</p>
+      </section>
+
+      <section id="profileCard" class="profile hidden" aria-label="Duolingo profile">
+        <div class="avatar-wrap">
+          <img id="avatar" class="avatar hidden" alt="">
+          <div id="avatarFallback" class="avatar fallback" aria-hidden="true">DU</div>
+        </div>
+        <dl class="profile-grid">
+          <div><dt>Username</dt><dd id="username">Not available</dd></div>
+          <div><dt>Display name</dt><dd id="displayName">Not available</dd></div>
+          <div><dt>Streak</dt><dd id="streak">Not available</dd></div>
+          <div><dt>Total XP</dt><dd id="totalXp">Not available</dd></div>
+          <div><dt>Gems</dt><dd id="gems">Not available</dd></div>
+          <div><dt>From language</dt><dd id="fromLanguage">Not available</dd></div>
+          <div><dt>Learning language</dt><dd id="learningLanguage">Not available</dd></div>
+        </dl>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "@duohacker/demo-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@duohacker/duolingo": "file:../.."
+  },
+  "devDependencies": {}
+}
