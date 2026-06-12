@@ -214,7 +214,7 @@ function render(root: HTMLElement): void {
     }
     card.append(
       row("Username", state.user.username),
-      row("Display name", state.user.displayName),
+      row("Display name", state.user.displayName ?? state.user.username),
       row("Streak", state.user.streak === null ? null : `${state.user.streak} days`),
       row("Total XP", state.user.totalXp),
       row("Gems", state.user.gems),

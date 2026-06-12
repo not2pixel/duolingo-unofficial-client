@@ -117,6 +117,17 @@ describe("response mapping", () => {
     });
   });
 
+  it("requests display-name fields when loading users", async () => {
+    const transport = new MockTransport({
+      status: 200,
+      data: { id: 123456, username: "learner", name: "Learner Name" }
+    });
+    const client = new DuolingoClient({ token: token(), transport });
+    const user = await client.users.getCurrent();
+    expect(decodeURIComponent(transport.requests[0]?.url ?? "")).toContain("name,displayName");
+    expect(user.displayName).toBe("Learner Name");
+  });
+
   it("maps leaderboard standings", async () => {
     const client = new DuolingoClient({
       token: token(),

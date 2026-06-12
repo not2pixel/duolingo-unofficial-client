@@ -25,7 +25,7 @@ export const DEFAULT_BASE_URLS: DuolingoBaseUrls = {
 
 export const ENDPOINTS = {
   users: {
-    currentFields: "id,username,fromLanguage,learningLanguage,streak,totalXp,gems,picture,streakData",
+    currentFields: "id,username,name,displayName,fromLanguage,learningLanguage,streak,totalXp,gems,picture,streakData",
     currentCourseFields: "currentCourse{pathSectioned{units{levels{pathLevelMetadata{skillId},pathLevelClientData{skillId}}}}}",
     byId: (id: string, fields: string) => `/2017-06-30/users/${encodeURIComponent(id)}?fields=${encodeURIComponent(fields)}`
   },

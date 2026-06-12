@@ -133,7 +133,7 @@
   };
   var ENDPOINTS = {
     users: {
-      currentFields: "id,username,fromLanguage,learningLanguage,streak,totalXp,gems,picture,streakData",
+      currentFields: "id,username,name,displayName,fromLanguage,learningLanguage,streak,totalXp,gems,picture,streakData",
       currentCourseFields: "currentCourse{pathSectioned{units{levels{pathLevelMetadata{skillId},pathLevelClientData{skillId}}}}}",
       byId: (id, fields) => `/2017-06-30/users/${encodeURIComponent(id)}?fields=${encodeURIComponent(fields)}`
     },
@@ -4919,7 +4919,7 @@
       }
       card.append(
         row("Username", state.user.username),
-        row("Display name", state.user.displayName),
+        row("Display name", state.user.displayName ?? state.user.username),
         row("Streak", state.user.streak === null ? null : `${state.user.streak} days`),
         row("Total XP", state.user.totalXp),
         row("Gems", state.user.gems),
