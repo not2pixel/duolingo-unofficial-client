@@ -5,9 +5,15 @@
 // @description  Read-only userscript demo for @duohacker/duolingo
 // @match        https://*.duolingo.com/*
 // @match        https://*.duolingo.cn/*
+// @run-at       document-end
 // @grant        GM_xmlhttpRequest
+// @grant        GM.xmlHttpRequest
 // @grant        GM_addStyle
+// @grant        GM.addStyle
 // @connect      duolingo.com
+// @connect      www.duolingo.com
+// @connect      duolingo.cn
+// @connect      www.duolingo.cn
 // ==/UserScript==
 
 "use strict";
@@ -4683,7 +4689,9 @@
     }
     return headers;
   }
-  function parseJsonResponse(text, url) {
+  function parseJsonResponse(response, url) {
+    if (response.response !== void 0 && typeof response.response !== "string") return response.response;
+    const text = typeof response.response === "string" ? response.response : response.responseText;
     if (!text) return null;
     try {
       return JSON.parse(text);
@@ -4715,7 +4723,7 @@
               resolve({
                 status: response.status,
                 headers: parseGmHeaders(response.responseHeaders),
-                data: parseJsonResponse(response.responseText, request.url)
+                data: parseJsonResponse(response, request.url)
               });
             } catch (error) {
               reject(error);
@@ -4756,13 +4764,52 @@
     error: null
   };
   function createDemoClient(token, transport) {
-    return new DuolingoClient({
-      token,
-      transport: transport ?? new GmTransport(GM_xmlhttpRequest)
-    });
+    const options = {
+      token: normalizeTokenInput(token),
+      transport: transport ?? new GmTransport(resolveGmXmlHttpRequest())
+    };
+    const baseUrls = baseUrlsForCurrentPage();
+    if (baseUrls) options.baseUrls = baseUrls;
+    return new DuolingoClient(options);
   }
   function formatUserValue(value) {
     return value === null || value === "" ? "Not available" : String(value);
+  }
+  function normalizeTokenInput(input) {
+    let token = input.trim();
+    if (token.toLowerCase().startsWith("bearer ")) token = token.slice(7).trim();
+    try {
+      const decoded = decodeURIComponent(token);
+      if (decoded.includes(".")) token = decoded;
+    } catch {
+    }
+    return token;
+  }
+  function resolveGmXmlHttpRequest() {
+    const globals = globalThis;
+    const request = globals.GM_xmlhttpRequest ?? globals.GM?.xmlHttpRequest;
+    if (!request) {
+      throw new Error("GM_xmlhttpRequest is unavailable. Check the userscript manager grants.");
+    }
+    return request;
+  }
+  function addStyle(css) {
+    const globals = globalThis;
+    const gmAddStyle = globals.GM_addStyle ?? globals.GM?.addStyle;
+    if (gmAddStyle) {
+      gmAddStyle(css);
+      return;
+    }
+    const style = document.createElement("style");
+    style.textContent = css;
+    document.head.append(style);
+  }
+  function baseUrlsForCurrentPage() {
+    if (typeof location === "undefined") return null;
+    if (location.hostname.endsWith("duolingo.cn")) {
+      return { web: "https://www.duolingo.cn" };
+    }
+    return null;
   }
   function formatError(error) {
     if (error instanceof DuolingoAuthError) return "Authentication failed. Check that the pasted JWT is current.";
@@ -4847,11 +4894,26 @@
     }
   }
   async function connectClient(root) {
-    const token = window.prompt("Paste a Duolingo JWT for this session only");
+    const token = window.prompt("Paste a Duolingo JWT or Bearer token for this session only");
     if (!token) return;
-    state.token = token;
-    state.client = createDemoClient(token);
-    await loadProfile(root);
+    const normalized = normalizeTokenInput(token);
+    if (normalized.split(".").length !== 3) {
+      state.status = "error";
+      state.error = "That does not look like a JWT. Paste the jwt_token value or a Bearer token.";
+      render(root);
+      return;
+    }
+    try {
+      state.token = normalized;
+      state.client = createDemoClient(normalized);
+      await loadProfile(root);
+    } catch (error) {
+      state.token = null;
+      state.client = null;
+      state.status = "error";
+      state.error = formatError(error);
+      render(root);
+    }
   }
   async function loadProfile(root) {
     if (!state.client) return;
@@ -4869,7 +4931,9 @@
     render(root);
   }
   function mount() {
-    GM_addStyle(`
+    const existing = document.getElementById("duc-demo-panel");
+    if (existing) existing.remove();
+    addStyle(`
     #duc-demo-panel {
       position: fixed;
       z-index: 2147483647;
@@ -4912,7 +4976,14 @@
     document.body.append(root);
     render(root);
   }
+  function mountWhenReady() {
+    if (document.body) {
+      mount();
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", mount, { once: true });
+  }
   if (typeof document !== "undefined") {
-    mount();
+    mountWhenReady();
   }
 })();

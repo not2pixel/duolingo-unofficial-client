@@ -1,8 +1,14 @@
-import { DuolingoClient, DuolingoAuthError, DuolingoHttpError, DuolingoRateLimitError, type DuolingoTransport, type DuolingoUser } from "@duohacker/duolingo";
+import { DuolingoClient, DuolingoAuthError, DuolingoHttpError, DuolingoRateLimitError, type DuolingoBaseUrls, type DuolingoTransport, type DuolingoUser } from "@duohacker/duolingo";
 import { GmTransport, type GmXmlHttpRequest } from "./gm-transport";
 
-declare const GM_xmlhttpRequest: GmXmlHttpRequest;
-declare function GM_addStyle(css: string): void;
+interface UserscriptGlobals {
+  GM_xmlhttpRequest?: GmXmlHttpRequest;
+  GM_addStyle?: (css: string) => void;
+  GM?: {
+    xmlHttpRequest?: GmXmlHttpRequest;
+    addStyle?: (css: string) => void;
+  };
+}
 
 interface DemoState {
   token: string | null;
@@ -21,14 +27,62 @@ const state: DemoState = {
 };
 
 export function createDemoClient(token: string, transport?: DuolingoTransport): DuolingoClient {
-  return new DuolingoClient({
-    token,
-    transport: transport ?? new GmTransport(GM_xmlhttpRequest)
-  });
+  const options: {
+    token: string;
+    transport: DuolingoTransport;
+    baseUrls?: Partial<DuolingoBaseUrls>;
+  } = {
+    token: normalizeTokenInput(token),
+    transport: transport ?? new GmTransport(resolveGmXmlHttpRequest())
+  };
+  const baseUrls = baseUrlsForCurrentPage();
+  if (baseUrls) options.baseUrls = baseUrls;
+  return new DuolingoClient(options);
 }
 
 export function formatUserValue(value: string | number | null): string {
   return value === null || value === "" ? "Not available" : String(value);
+}
+
+export function normalizeTokenInput(input: string): string {
+  let token = input.trim();
+  if (token.toLowerCase().startsWith("bearer ")) token = token.slice(7).trim();
+  try {
+    const decoded = decodeURIComponent(token);
+    if (decoded.includes(".")) token = decoded;
+  } catch {
+    // Keep the original token if it is not URL encoded.
+  }
+  return token;
+}
+
+function resolveGmXmlHttpRequest(): GmXmlHttpRequest {
+  const globals = globalThis as typeof globalThis & UserscriptGlobals;
+  const request = globals.GM_xmlhttpRequest ?? globals.GM?.xmlHttpRequest;
+  if (!request) {
+    throw new Error("GM_xmlhttpRequest is unavailable. Check the userscript manager grants.");
+  }
+  return request;
+}
+
+function addStyle(css: string): void {
+  const globals = globalThis as typeof globalThis & UserscriptGlobals;
+  const gmAddStyle = globals.GM_addStyle ?? globals.GM?.addStyle;
+  if (gmAddStyle) {
+    gmAddStyle(css);
+    return;
+  }
+  const style = document.createElement("style");
+  style.textContent = css;
+  document.head.append(style);
+}
+
+function baseUrlsForCurrentPage(): Partial<DuolingoBaseUrls> | null {
+  if (typeof location === "undefined") return null;
+  if (location.hostname.endsWith("duolingo.cn")) {
+    return { web: "https://www.duolingo.cn" };
+  }
+  return null;
 }
 
 function formatError(error: unknown): string {
@@ -132,11 +186,26 @@ function render(root: HTMLElement): void {
 }
 
 async function connectClient(root: HTMLElement): Promise<void> {
-  const token = window.prompt("Paste a Duolingo JWT for this session only");
+  const token = window.prompt("Paste a Duolingo JWT or Bearer token for this session only");
   if (!token) return;
-  state.token = token;
-  state.client = createDemoClient(token);
-  await loadProfile(root);
+  const normalized = normalizeTokenInput(token);
+  if (normalized.split(".").length !== 3) {
+    state.status = "error";
+    state.error = "That does not look like a JWT. Paste the jwt_token value or a Bearer token.";
+    render(root);
+    return;
+  }
+  try {
+    state.token = normalized;
+    state.client = createDemoClient(normalized);
+    await loadProfile(root);
+  } catch (error) {
+    state.token = null;
+    state.client = null;
+    state.status = "error";
+    state.error = formatError(error);
+    render(root);
+  }
 }
 
 async function loadProfile(root: HTMLElement): Promise<void> {
@@ -156,7 +225,10 @@ async function loadProfile(root: HTMLElement): Promise<void> {
 }
 
 function mount(): void {
-  GM_addStyle(`
+  const existing = document.getElementById("duc-demo-panel");
+  if (existing) existing.remove();
+
+  addStyle(`
     #duc-demo-panel {
       position: fixed;
       z-index: 2147483647;
@@ -201,6 +273,14 @@ function mount(): void {
   render(root);
 }
 
+function mountWhenReady(): void {
+  if (document.body) {
+    mount();
+    return;
+  }
+  document.addEventListener("DOMContentLoaded", mount, { once: true });
+}
+
 if (typeof document !== "undefined") {
-  mount();
+  mountWhenReady();
 }

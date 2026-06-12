@@ -2,7 +2,8 @@ import type { DuolingoTransport, TransportRequest, TransportResponse } from "@du
 
 export interface GmXmlHttpResponse {
   status: number;
-  responseText: string;
+  responseText?: string;
+  response?: unknown;
   responseHeaders?: string;
 }
 
@@ -32,7 +33,9 @@ export function parseGmHeaders(raw = ""): Record<string, string> {
   return headers;
 }
 
-function parseJsonResponse(text: string, url: string): unknown {
+function parseJsonResponse(response: GmXmlHttpResponse, url: string): unknown {
+  if (response.response !== undefined && typeof response.response !== "string") return response.response;
+  const text = typeof response.response === "string" ? response.response : response.responseText;
   if (!text) return null;
   try {
     return JSON.parse(text) as unknown;
@@ -75,7 +78,7 @@ export class GmTransport implements DuolingoTransport {
             resolve({
               status: response.status,
               headers: parseGmHeaders(response.responseHeaders),
-              data: parseJsonResponse(response.responseText, request.url) as T
+              data: parseJsonResponse(response, request.url) as T
             });
           } catch (error) {
             reject(error);

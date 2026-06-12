@@ -43,7 +43,7 @@
     "demo:userscript:build": "node demos/userscript/build.mjs",
     "demo:node:typecheck": "tsc -p demos/node/tsconfig.json",
     "demo:node": "npm run build && tsx demos/node/index.ts",
-    "demo:web": "vercel dev demos/web",
+    "demo:web": "npx --yes vercel dev demos/web --yes",
     "demo:web:typecheck": "npm --workspace @duohacker/demo-web run typecheck",
     "demo:web:test": "npm --workspace @duohacker/demo-web run test",
     "demos:check": "npm run typecheck && npm test && npm run build && npm run demo:userscript:typecheck && npm run demo:userscript:build && npm run demo:node:typecheck && npm run demo:web:typecheck && npm run demo:web:test"
@@ -59,7 +59,6 @@
     "tsup": "^8.4.0",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0",
-    "vercel": "^54.12.0",
     "vitest": "^3.1.0"
   }
 }

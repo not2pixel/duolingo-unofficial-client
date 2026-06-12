@@ -12,9 +12,15 @@ const metadata = `// ==UserScript==
 // @description  Read-only userscript demo for @duohacker/duolingo
 // @match        https://*.duolingo.com/*
 // @match        https://*.duolingo.cn/*
+// @run-at       document-end
 // @grant        GM_xmlhttpRequest
+// @grant        GM.xmlHttpRequest
 // @grant        GM_addStyle
+// @grant        GM.addStyle
 // @connect      duolingo.com
+// @connect      www.duolingo.com
+// @connect      duolingo.cn
+// @connect      www.duolingo.cn
 // ==/UserScript==
 `;
 

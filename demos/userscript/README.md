@@ -4,8 +4,10 @@ This demo builds a Tampermonkey/Violentmonkey userscript that runs on Duolingo
 pages and reads the current profile through `@duohacker/duolingo`.
 
 It asks for a Duolingo JWT when you press **Connect**, keeps that token only in
-memory, and clears it when you disconnect or reload the page. It does not patch
-`fetch`, `XMLHttpRequest`, or any Duolingo page behavior.
+memory, and clears it when you disconnect or reload the page. You may paste the
+raw `jwt_token` value, a URL-encoded cookie value, or an `Authorization: Bearer`
+value. It does not patch `fetch`, `XMLHttpRequest`, or any Duolingo page
+behavior.
 
 ## Build
 
@@ -28,3 +30,12 @@ without rebuilding, but it should be regenerated after source changes.
 - Tokens are not written to storage.
 - Authorization headers are never logged.
 - Only read-only profile data is displayed.
+
+## Troubleshooting
+
+- If the panel does not appear, confirm the script is enabled on
+  `https://*.duolingo.com/*` or `https://*.duolingo.cn/*`.
+- If requests fail immediately, confirm the userscript manager granted
+  `GM_xmlhttpRequest` or `GM.xmlHttpRequest` and the explicit `@connect` hosts.
+- If authentication fails, paste only the JWT-like value with three dot-separated
+  parts, or paste a `Bearer ...` value and let the demo normalize it.

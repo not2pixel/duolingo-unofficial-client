@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { GmTransport, type GmXmlHttpRequest } from "../src/gm-transport";
-import { createDemoClient } from "../src/demo.user";
+import { createDemoClient, normalizeTokenInput } from "../src/demo.user";
 
 describe("GmTransport", () => {
   it("parses JSON responses and headers", async () => {
@@ -15,6 +15,19 @@ describe("GmTransport", () => {
     await expect(transport.request({ method: "GET", url: "https://www.duolingo.com/test" })).resolves.toEqual({
       status: 200,
       headers: { "content-type": "application/json", "retry-after": "1" },
+      data: { ok: true }
+    });
+  });
+
+  it("uses object responses directly when the userscript manager provides them", async () => {
+    const gm: GmXmlHttpRequest = (options) => {
+      options.onload({
+        status: 200,
+        response: { ok: true },
+        responseHeaders: "content-type: application/json"
+      });
+    };
+    await expect(new GmTransport(gm).request({ method: "GET", url: "https://www.duolingo.com/test" })).resolves.toMatchObject({
       data: { ok: true }
     });
   });
@@ -48,5 +61,10 @@ describe("GmTransport", () => {
     const client = createDemoClient("header.payload.signature", new GmTransport(gm));
     expect(client).toBeDefined();
     expect(setItem).not.toHaveBeenCalled();
+  });
+
+  it("normalizes pasted token values", () => {
+    expect(normalizeTokenInput(" Bearer header.payload.signature ")).toBe("header.payload.signature");
+    expect(normalizeTokenInput("header%2Epayload%2Esignature")).toBe("header.payload.signature");
   });
 });

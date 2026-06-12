@@ -59,7 +59,8 @@ No demo commits a real JWT, logs JWTs, or stores JWTs in source control.
 A standalone browser page generally cannot call Duolingo APIs directly because
 browser CORS rules apply. Each demo avoids that differently:
 
-- The userscript uses `GM_xmlhttpRequest` with explicit `@connect` metadata.
+- The userscript uses `GM_xmlhttpRequest` or `GM.xmlHttpRequest` with explicit
+  `@connect` metadata.
 - The Node.js CLI is not subject to browser CORS.
 - The Vercel browser frontend calls same-origin Vercel Functions with
   `fetch("/api/me")`.
@@ -85,4 +86,5 @@ requires these environment variables in Vercel:
 - Rate limits: wait before retrying.
 - Upstream errors: Duolingo internal web endpoints may change without notice.
 - Userscript connection errors: confirm the userscript manager has permission to
-  connect to `duolingo.com`.
+  connect to `duolingo.com`, `www.duolingo.com`, `duolingo.cn`, and
+  `www.duolingo.cn`.
