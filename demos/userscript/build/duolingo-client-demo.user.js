@@ -71,6 +71,11 @@
   function dateFromSeconds(value) {
     return typeof value === "number" && Number.isFinite(value) ? new Date(value * 1e3) : null;
   }
+  function subjectFromClaim(value) {
+    if (typeof value === "string" && value.length > 0) return value;
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+    return null;
+  }
   function decodeJwt(token) {
     const parts = token.split(".");
     if (parts.length !== 3 || !parts[1]) {
@@ -90,7 +95,7 @@
   function getTokenInformation(token) {
     const payload = decodeJwt(token);
     return {
-      subject: typeof payload.sub === "string" ? payload.sub : null,
+      subject: subjectFromClaim(payload.sub),
       issuer: typeof payload.iss === "string" ? payload.iss : null,
       audience: typeof payload.aud === "string" || Array.isArray(payload.aud) ? payload.aud : null,
       issuedAt: dateFromSeconds(payload.iat),

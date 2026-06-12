@@ -82,6 +82,7 @@ describe("GmTransport", () => {
 
   it("checks JWT structure and decodable payload before connecting", () => {
     expect(isLikelyJwt(token())).toBe(true);
+    expect(isLikelyJwt(token({ sub: 561583074752767 }))).toBe(true);
     expect(isLikelyJwt("header.payload.signature")).toBe(false);
     expect(isLikelyJwt("not-a-token")).toBe(false);
   });

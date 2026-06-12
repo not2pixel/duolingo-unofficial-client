@@ -56,6 +56,16 @@ describe("auth", () => {
     expect(decoded.iss).toBe("duolingo");
   });
 
+  it("accepts numeric JWT subject claims used by Duolingo sessions", async () => {
+    const transport = new MockTransport({
+      status: 200,
+      data: { id: "561583074752767", username: "learner" }
+    });
+    const client = new DuolingoClient({ token: token({ sub: 561583074752767 }), transport });
+    await client.users.getCurrent();
+    expect(transport.requests[0]?.url).toContain("/2017-06-30/users/561583074752767");
+  });
+
   it("throws for missing tokens", async () => {
     const client = new DuolingoClient({ transport: new MockTransport() });
     await expect(client.users.getCurrent()).rejects.toBeInstanceOf(DuolingoAuthError);

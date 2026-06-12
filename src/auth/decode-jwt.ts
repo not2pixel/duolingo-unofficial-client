@@ -18,6 +18,12 @@ function dateFromSeconds(value: unknown): Date | null {
   return typeof value === "number" && Number.isFinite(value) ? new Date(value * 1000) : null;
 }
 
+function subjectFromClaim(value: unknown): string | null {
+  if (typeof value === "string" && value.length > 0) return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return null;
+}
+
 /**
  * Decodes a JWT payload without verifying its signature.
  *
@@ -45,7 +51,7 @@ export function decodeJwt(token: string): DecodedJwtPayload {
 export function getTokenInformation(token: string): DuolingoTokenInformation {
   const payload = decodeJwt(token);
   return {
-    subject: typeof payload.sub === "string" ? payload.sub : null,
+    subject: subjectFromClaim(payload.sub),
     issuer: typeof payload.iss === "string" ? payload.iss : null,
     audience:
       typeof payload.aud === "string" || Array.isArray(payload.aud)

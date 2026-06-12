@@ -1,7 +1,7 @@
 export type TokenProvider = () => string | null | undefined | Promise<string | null | undefined>;
 
 export interface DecodedJwtPayload {
-  sub?: string;
+  sub?: string | number;
   iss?: string;
   aud?: string | string[];
   exp?: number;
