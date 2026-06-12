@@ -4733,7 +4733,10 @@
           ontimeout: () => rejectOnce(new Error("Request timed out")),
           onabort: () => rejectOnce(new Error("Request was aborted"))
         };
-        if (request.headers !== void 0) options.headers = request.headers;
+        options.headers = {
+          accept: "application/json",
+          ...request.headers
+        };
         if (request.body !== void 0) options.data = JSON.stringify(request.body);
         const handle = this.gmXmlHttpRequest(options);
         if (request.signal) {
@@ -4777,6 +4780,8 @@
   }
   function normalizeTokenInput(input) {
     let token = input.trim();
+    const cookieMatch = token.match(/(?:^|;\s*)jwt_token=([^;]+)/i) ?? token.match(/^jwt_token=([^;]+)$/i);
+    if (cookieMatch?.[1]) token = cookieMatch[1].trim();
     if (token.toLowerCase().startsWith("bearer ")) token = token.slice(7).trim();
     try {
       const decoded = decodeURIComponent(token);
@@ -4784,6 +4789,19 @@
     } catch {
     }
     return token;
+  }
+  function getJwtFromCurrentPageCookie(cookie = typeof document === "undefined" ? "" : document.cookie) {
+    const match = cookie.match(/(?:^|;\s*)jwt_token=([^;]+)/i);
+    return match?.[1] ? normalizeTokenInput(match[1]) : null;
+  }
+  function isLikelyJwt(token) {
+    if (token.split(".").length !== 3) return false;
+    try {
+      getTokenInformation(token);
+      return true;
+    } catch {
+      return false;
+    }
   }
   function resolveGmXmlHttpRequest() {
     const globals = globalThis;
@@ -4812,7 +4830,12 @@
     return null;
   }
   function formatError(error) {
-    if (error instanceof DuolingoAuthError) return "Authentication failed. Check that the pasted JWT is current.";
+    if (error instanceof DuolingoAuthError) {
+      if (error.status === 401 || error.status === 403) {
+        return "Duolingo rejected this token. Use Page Login or paste a fresh jwt_token from the same account.";
+      }
+      return "Invalid JWT. Paste the jwt_token value, a jwt_token=... cookie, or a Bearer token.";
+    }
     if (error instanceof DuolingoRateLimitError) return "Duolingo rate-limited the request. Please wait and try again.";
     if (error instanceof DuolingoHttpError) return "Duolingo returned an upstream error. Please try again later.";
     if (error instanceof Error) return error.message;
@@ -4856,6 +4879,14 @@
       if (state.client) void loadProfile(root);
       else void connectClient(root);
     });
+    const usePageLogin = document.createElement("button");
+    usePageLogin.type = "button";
+    usePageLogin.textContent = "Use Page Login";
+    usePageLogin.disabled = state.status === "loading";
+    usePageLogin.title = "Read jwt_token from this Duolingo page cookie and keep it in memory only.";
+    usePageLogin.addEventListener("click", () => {
+      void connectFromPageCookie(root);
+    });
     const disconnect = document.createElement("button");
     disconnect.type = "button";
     disconnect.textContent = "Disconnect";
@@ -4868,7 +4899,7 @@
       state.status = "disconnected";
       render(root);
     });
-    actions.append(connect, disconnect);
+    actions.append(connect, usePageLogin, disconnect);
     root.append(title, status, actions);
     if (state.user) {
       const card = document.createElement("div");
@@ -4894,12 +4925,25 @@
     }
   }
   async function connectClient(root) {
-    const token = window.prompt("Paste a Duolingo JWT or Bearer token for this session only");
+    const token = window.prompt("Paste a Duolingo JWT, jwt_token=... cookie, or Bearer token for this session only");
     if (!token) return;
-    const normalized = normalizeTokenInput(token);
-    if (normalized.split(".").length !== 3) {
+    await connectWithToken(root, normalizeTokenInput(token));
+  }
+  async function connectFromPageCookie(root) {
+    const token = getJwtFromCurrentPageCookie();
+    if (!token) {
       state.status = "error";
-      state.error = "That does not look like a JWT. Paste the jwt_token value or a Bearer token.";
+      state.error = "No jwt_token cookie is visible on this page. Log in to Duolingo, then retry or paste the token manually.";
+      render(root);
+      return;
+    }
+    await connectWithToken(root, token);
+  }
+  async function connectWithToken(root, token) {
+    const normalized = normalizeTokenInput(token);
+    if (!isLikelyJwt(normalized)) {
+      state.status = "error";
+      state.error = "That does not look like a valid JWT. Paste the jwt_token value, jwt_token=... cookie, or a Bearer token.";
       render(root);
       return;
     }
@@ -4963,7 +5007,7 @@
     #duc-demo-panel .duc-status { margin-bottom: 10px; }
     #duc-demo-panel .duc-error { color: #b42318; }
     #duc-demo-panel .duc-connected { color: #087f5b; }
-    #duc-demo-panel .duc-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+    #duc-demo-panel .duc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
     #duc-demo-panel .duc-card { display: grid; gap: 7px; }
     #duc-demo-panel .duc-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; }
     #duc-demo-panel .duc-row { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #edf2f7; padding-top: 6px; }

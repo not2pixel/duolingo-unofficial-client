@@ -88,7 +88,10 @@ export class GmTransport implements DuolingoTransport {
         ontimeout: () => rejectOnce(new Error("Request timed out")),
         onabort: () => rejectOnce(new Error("Request was aborted"))
       };
-      if (request.headers !== undefined) options.headers = request.headers;
+      options.headers = {
+        accept: "application/json",
+        ...request.headers
+      };
       if (request.body !== undefined) options.data = JSON.stringify(request.body);
 
       const handle = this.gmXmlHttpRequest(options);

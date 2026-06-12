@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { GmTransport, type GmXmlHttpRequest } from "../src/gm-transport";
-import { createDemoClient, normalizeTokenInput } from "../src/demo.user";
+import { createDemoClient, getJwtFromCurrentPageCookie, isLikelyJwt, normalizeTokenInput } from "../src/demo.user";
+
+function token(payload: Record<string, unknown> = { sub: "123456" }): string {
+  const encode = (value: unknown) => Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
+  return `${encode({ alg: "none", typ: "JWT" })}.${encode(payload)}.signature`;
+}
 
 describe("GmTransport", () => {
   it("parses JSON responses and headers", async () => {
@@ -66,5 +71,18 @@ describe("GmTransport", () => {
   it("normalizes pasted token values", () => {
     expect(normalizeTokenInput(" Bearer header.payload.signature ")).toBe("header.payload.signature");
     expect(normalizeTokenInput("header%2Epayload%2Esignature")).toBe("header.payload.signature");
+    expect(normalizeTokenInput("jwt_token=header.payload.signature")).toBe("header.payload.signature");
+    expect(normalizeTokenInput("foo=bar; jwt_token=header.payload.signature; other=value")).toBe("header.payload.signature");
+  });
+
+  it("reads jwt_token from the current page cookie string", () => {
+    expect(getJwtFromCurrentPageCookie("foo=bar; jwt_token=header.payload.signature; other=value")).toBe("header.payload.signature");
+    expect(getJwtFromCurrentPageCookie("foo=bar")).toBeNull();
+  });
+
+  it("checks JWT structure and decodable payload before connecting", () => {
+    expect(isLikelyJwt(token())).toBe(true);
+    expect(isLikelyJwt("header.payload.signature")).toBe(false);
+    expect(isLikelyJwt("not-a-token")).toBe(false);
   });
 });

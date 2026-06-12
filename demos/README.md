@@ -48,7 +48,8 @@ npm run demos:check
 
 ## Authentication Differences
 
-- Userscript: asks the user to paste a JWT and keeps it in memory only.
+- Userscript: can read the current page's visible `jwt_token` cookie or ask the
+  user to paste a JWT; either way it keeps the token in memory only.
 - Node CLI: reads `DUOLINGO_TOKEN` from the shell environment.
 - Vercel web: reads `DUOLINGO_TOKEN` on the server-side Function.
 
